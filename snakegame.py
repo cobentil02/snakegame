@@ -5,36 +5,37 @@ import time
 # Constants
 WIDTH, HEIGHT = 400, 400
 GRID_SIZE = 20
-SNAKE_SPEED = 150  # in milliseconds
+SNAKE_SPEED = 150  # Default speed in milliseconds
 
 class SnakeGame:
     def __init__(self, root):
+        # Initialize the game
         self.root = root
         self.root.title("Snake Game")
         self.canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT)
         self.canvas.pack()
 
-        # Initialize the snake with one segment and place the food
+        # Initialize the snake with one segment and create the initial food
         self.snake = [(100, 100)]
         self.food = self.create_food()
         self.direction = "Right"
 
-        # Bind the arrow keys to the change_direction function
+        # Bind key events to the change_direction method
         self.root.bind("<Key>", self.change_direction)
 
-        # Initialize game state
+        # Initialize game state variables
         self.game_over = False
         self.score = 0
 
-        # Create a "Restart" button
+        # Create a restart button
         self.restart_button = tk.Button(root, text="Restart", command=self.restart_game)
         self.restart_button.pack()
 
-        # Start the game loop
-        self.update()
+        # Start the game with the default speed
+        self.start_game()
 
     def create_food(self):
-        # Create and return the coordinates for a new food item
+        # Create a random position for the food within the game grid
         x = random.randint(0, (WIDTH - GRID_SIZE) // GRID_SIZE) * GRID_SIZE
         y = random.randint(0, (HEIGHT - GRID_SIZE) // GRID_SIZE) * GRID_SIZE
         return (x, y)
@@ -55,7 +56,7 @@ class SnakeGame:
         )
 
     def change_direction(self, event):
-        # Change the snake's direction based on arrow key presses
+        # Change the direction of the snake based on key events
         if event.keysym == "Up" and self.direction != "Down":
             self.direction = "Up"
         elif event.keysym == "Down" and self.direction != "Up":
@@ -66,7 +67,7 @@ class SnakeGame:
             self.direction = "Right"
 
     def check_collision(self):
-        # Check if the snake collides with the wall or itself
+        # Check for collisions with the walls or itself
         x, y = self.snake[0]
         if (
             x < 0
@@ -79,7 +80,7 @@ class SnakeGame:
         return False
 
     def move_snake(self):
-        # Move the snake based on its current direction
+        # Move the snake in the current direction
         x, y = self.snake[0]
         if self.direction == "Up":
             y -= GRID_SIZE
@@ -92,24 +93,30 @@ class SnakeGame:
 
         self.snake.insert(0, (x, y))
 
-        # Check if the snake ate the food and update the score
         if self.snake[0] == self.food:
+            # If the snake eats the food, increase the score and create new food
             self.score += 1
             self.food = self.create_food()
         else:
+            # Remove the tail segment to keep the snake's length constant
             self.snake.pop()
 
     def restart_game(self):
-        # Reset the game state for a new game
+        # Reset the game state to start a new game
         self.snake = [(100, 100)]
         self.food = self.create_food()
         self.direction = "Right"
         self.game_over = False
         self.score = 0
-        self.update()
 
-    def update(self):
-        # Main game loop
+        # Restart the game with the default speed
+        self.start_game()
+
+    def start_game(self):
+        # Start the game loop with the default speed
+        self.update(SNAKE_SPEED)
+
+    def update(self, speed):
         if not self.game_over:
             self.canvas.delete("all")
             self.move_snake()
@@ -117,7 +124,6 @@ class SnakeGame:
             self.draw_food()
 
             if self.check_collision():
-                # End the game if a collision occurs
                 self.game_over = True
                 self.canvas.create_text(
                     WIDTH // 2,
@@ -127,10 +133,12 @@ class SnakeGame:
                     font=("Helvetica", 20),
                 )
             else:
-                # Continue the game loop by scheduling the next update
-                self.root.after(SNAKE_SPEED, self.update)
-        else:
-            self.root.quit()
+                # Continue the game loop with the given speed
+                self.root.after(speed, lambda: self.update(speed))
+        # If the game is over, do nothing and simply return
+        # This prevents the game from closing prematurely.
+        # The game will only exit when the user closes the window.
+        return
 
 if __name__ == "__main__":
     root = tk.Tk()
